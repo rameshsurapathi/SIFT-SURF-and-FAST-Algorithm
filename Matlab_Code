@@ -1,0 +1,133 @@
+
+% Image tampering detection using SIFT algorithm and Discrete Wavelet transform
+% Using VL feat Library for SIFT algorithm
+
+
+Original_Image = imread('Original.jpg');
+
+Tampered_Image = imread('Tampered.jpg');
+
+Original_Image = rgb2gray(Original_Image);
+
+Tampered_Image = rgb2gray(Tampered_Image);
+
+————— For time being don’t touch it ——————————————
+
+% Extracting the red component of the image and performing DWT on it.
+
+% Original_Image = im2double(Original_Image);
+% redcomp = Original_Image(:,:,3); 
+
+% [A H V D]=dwt2(redcomp,’haar');
+% new_I = wcodemat(A);
+%  image(new_I);
+
+——————————————————————————————————————————
+
+SIFT using vl_libraray
+
+% The vl_sift command requires a single precision gray scale image.
+
+new_Original_Image = single(rgb2gray(Original_Image));
+image(new_Original_Image);
+
+new_Tampered_Image = single(rgb2gray(Tampered_Image));
+image(new_Tampered_Image);
+
+% f gives the frames and d gives the descriptors of the sift algorithm
+
+[OriginalFrames,OriginalDescriptors] = vl_sift(new_Original_Image);
+
+[TamperedFrames,TamperedDescriptors] = vl_sift(new_Tampered_Image);
+
+% Where 1.5 = ratio between euclidean distance of NN2/NN1
+
+[matches score] = vl_ubcmatch(OriginalDescriptors,TamperedDescriptors,1.5); 
+
+    subplot(1,2,1);
+    imshow(uint8(Original_Image));
+    hold on;
+    plot(OriginalFrames(1,matches(1,:)),OriginalFrames(2,matches(1,:)),'b*');
+
+    subplot(1,2,2);
+    imshow(uint8(Tampered_Image));
+    hold on;
+    plot(TamperedFrames(1,matches(2,:)),TamperedFrames(2,matches(2,:)),'r*');
+
+
+—————— SURF ———————————
+
+Original_Surf_pts  = detectSURFFeatures(Original_Image);
+
+Original_Surf_pts = 
+
+  147x1 SURFPoints array with properties:
+
+              Scale: [147x1 single]
+    SignOfLaplacian: [147x1 int8]
+        Orientation: [147x1 single]
+           Location: [147x2 single]
+             Metric: [147x1 single]
+              Count: 147
+
+Tampered_Surf_pts  = detectSURFFeatures(Tampered_Image);
+
+158x1 SURFPoints array with properties:
+
+              Scale: [158x1 single]
+    SignOfLaplacian: [158x1 int8]
+        Orientation: [158x1 single]
+           Location: [158x2 single]
+             Metric: [158x1 single]
+              Count: 158
+
+[OriginalFeatures, OriginalPoints]  = extractFeatures(Original_Image, Original_Surf_pts);
+
+[TamperedFeatures, TamperedPoints]  = extractFeatures(Tampered_Image, Tampered_Surf_pts);
+
+indexPairs = matchFeatures(OriginalFeatures, TamperedFeatures);
+
+matchedOriginal  = OriginalPoints(indexPairs(:,1));
+
+matchedTampered  = TamperedPoints(indexPairs(:,2));
+
+figure;
+
+showMatchedFeatures(Original_Image,Tampered_Image,matchedOriginal,matchedTampered);
+
+
+—————— FAST ——————————
+
+Original_Surf_pts  = detectFASTFeatures(Original_Image);
+
+Original_Surf_pts = 
+
+  239x1 cornerPoints array with properties:
+
+    Location: [239x2 single]
+      Metric: [239x1 single]
+       Count: 239
+
+Tampered_Surf_pts  = detectFASTFeatures(Tampered_Image);
+
+Tampered_Surf_pts = 
+
+  240x1 cornerPoints array with properties:
+
+    Location: [240x2 single]
+      Metric: [240x1 single]
+       Count: 240
+
+[OriginalFeatures, OriginalPoints]  = extractFeatures(Original_Image, Original_Surf_pts);
+
+[TamperedFeatures, TamperedPoints]  = extractFeatures(Tampered_Image, Tampered_Surf_pts);
+
+indexPairs = matchFeatures(OriginalFeatures, TamperedFeatures);
+
+matchedOriginal  = OriginalPoints(indexPairs(:,1));
+
+matchedTampered  = TamperedPoints(indexPairs(:,2));
+
+figure;
+
+showMatchedFeatures(Original_Image,Tampered_Image,matchedOriginal,matchedTampered);
